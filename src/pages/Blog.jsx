@@ -24,65 +24,72 @@ const Blog = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
             <Navbar />
 
-            <main className="flex-grow container mx-auto px-4 py-12 max-w-6xl">
-                <header className="text-center mb-16">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Travel Blog</h1>
-                    <p className="text-xl text-gray-500 max-w-2xl mx-auto">Expert advice, insider guides, and travel inspiration for your next adventure.</p>
-                </header>
-
-                {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <main className="flex-grow pt-20">
+                {/* Header */}
+                <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-16">
+                    <div className="container mx-auto px-6 text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4">Travel Blog</h1>
+                        <p className="text-slate-300 max-w-xl mx-auto">
+                            Expert advice, insider guides, and travel inspiration for your next adventure.
+                        </p>
                     </div>
-                ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {posts.length === 0 ? (
-                            <div className="col-span-full text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-                                <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-                                    <i className="fa-regular fa-newspaper"></i>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">No posts found</h3>
-                                <p className="text-gray-500">Check back later for new travel stories!</p>
+                </div>
+
+                {/* Content */}
+                <div className="container mx-auto px-6 py-12 max-w-6xl">
+                    {loading ? (
+                        <div className="text-center py-16">
+                            <i className="fa-solid fa-spinner animate-spin text-blue-600 text-2xl mb-4"></i>
+                            <p className="text-slate-500">Loading posts...</p>
+                        </div>
+                    ) : posts.length === 0 ? (
+                        <div className="bg-white rounded-2xl p-12 text-center">
+                            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fa-regular fa-newspaper text-blue-600 text-xl"></i>
                             </div>
-                        ) : (
-                            posts.map(post => (
-                                <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition group cursor-pointer border border-gray-100 flex flex-col h-full">
-                                    <div className="h-48 overflow-hidden relative">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-2">No posts yet</h3>
+                            <p className="text-slate-500">Check back later for travel stories!</p>
+                        </div>
+                    ) : (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {posts.map(post => (
+                                <Link 
+                                    key={post.id} 
+                                    to={`/blog/${post.id}`}
+                                    className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition group"
+                                >
+                                    <div className="aspect-[16/10] overflow-hidden">
                                         <img 
-                                            src={post.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1000&auto=format&fit=crop"} 
+                                            src={post.image_url || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"} 
                                             alt={post.title} 
                                             className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
                                         />
-                                        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-xs font-bold text-gray-900 uppercase tracking-wide">
-                                            Travel Tips
-                                        </div>
                                     </div>
-                                    <div className="p-6 flex-grow flex flex-col">
-                                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                                            <i className="fa-regular fa-calendar"></i>
-                                            {new Date(post.created_at).toLocaleDateString()}
+                                    <div className="p-5">
+                                        <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                                            <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded font-medium">Travel Tips</span>
+                                            <span>•</span>
+                                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
                                         </div>
-                                        <h3 className="text-xl font-bold mb-3 group-hover:text-blue-600 transition line-clamp-2">{post.title}</h3>
-                                        <p className="text-gray-500 text-sm mb-4 line-clamp-3 flex-grow">{post.content}</p>
-                                        
-                                        <div className="pt-4 mt-auto border-t border-gray-100 flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Author" className="w-full h-full object-cover" />
-                                                </div>
-                                                <span className="text-xs font-medium text-gray-900">Toplago Team</span>
+                                        <h3 className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-blue-600 transition line-clamp-2">
+                                            {post.title}
+                                        </h3>
+                                        <p className="text-slate-500 text-sm line-clamp-2 mb-4">{post.content}</p>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden">
+                                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Author" className="w-full h-full object-cover" />
                                             </div>
-                                            <Link to={`/blog/${post.id}`} className="text-blue-600 text-sm font-semibold hover:underline">Read More</Link>
+                                            <span className="text-xs font-medium text-slate-600">Toplago Team</span>
                                         </div>
                                     </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                )}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </main>
 
             <Footer />

@@ -4,116 +4,122 @@ import MapComponent from './MapComponent';
 const ItineraryView = ({ trip }) => {
     const [activeDay, setActiveDay] = useState(1);
     const days = trip.day_plans || trip.days || [];
-
-    // Helper to get activities for the current day
     const currentDayActivities = days.find(d => (d.day_number || d.day) === activeDay)?.activities || [];
 
-    // Mock data for recommendations (Right column)
-    const recommendations = [
-        {
-            id: 1,
-            title: "Skip-the-Line Louvre Museum Guided Tour",
-            image: "https://images.unsplash.com/photo-1499856871940-a09627c6dcf6?q=80&w=1000&auto=format&fit=crop",
-            rating: 4.9,
-            reviews: 12847,
-            duration: "3 hours",
-            price: 89,
-            tags: ["Small group", "English, French"]
-        },
-        {
-            id: 2,
-            title: "Eiffel Tower Summit with Priority Access",
-            image: "https://images.unsplash.com/photo-1511739001486-6bfe10ce7859?q=80&w=1000&auto=format&fit=crop",
-            rating: 4.7,
-            reviews: 28394,
-            duration: "1.5 hours",
-            price: 72,
-            tags: ["Skip-the-line", "Accessible"]
-        },
-        {
-            id: 3,
-            title: "Seine River Dinner Cruise with Live Music",
-            image: "https://images.unsplash.com/photo-1543349689-9a4d426bee8e?q=80&w=1000&auto=format&fit=crop",
-            rating: 4.8,
-            reviews: 9156,
-            duration: "2.5 hours",
-            price: 145,
-            tags: ["Dinner included", "Live music"]
-        }
-    ];
+    const getTimeIcon = (time) => {
+        const t = (time || '').toLowerCase();
+        if (t.includes('morning')) return { icon: 'fa-sun', bg: 'bg-amber-500' };
+        if (t.includes('afternoon')) return { icon: 'fa-cloud-sun', bg: 'bg-orange-500' };
+        if (t.includes('evening') || t.includes('night')) return { icon: 'fa-moon', bg: 'bg-indigo-500' };
+        if (t.includes('lunch')) return { icon: 'fa-utensils', bg: 'bg-red-500' };
+        return { icon: 'fa-location-dot', bg: 'bg-blue-500' };
+    };
 
     return (
-        <div className="grid lg:grid-cols-12 gap-8">
-            {/* Left Column: Itinerary */}
-            <div className="lg:col-span-5 space-y-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">Day-by-Day Itinerary</h2>
-                        <button className="text-blue-600 hover:text-blue-700">
-                            <i className="fa-solid fa-pen"></i>
-                        </button>
-                    </div>
-
-                    {/* Day Tabs */}
-                    <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
-                        {days.map((day) => {
-                            const dayNum = day.day_number || day.day;
-                            return (
-                                <button
-                                    key={dayNum}
-                                    onClick={() => setActiveDay(dayNum)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition ${
-                                        activeDay === dayNum
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    Day {dayNum}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Timeline */}
-                    <div className="relative pl-4 border-l-2 border-gray-100 space-y-8">
-                        {currentDayActivities.map((activity, index) => (
-                            <div key={index} className="relative pl-6">
-                                {/* Timeline Dot/Icon */}
-                                <div className="absolute -left-[21px] top-0 w-10 h-10 rounded-full bg-blue-500 border-4 border-white shadow-sm flex items-center justify-center text-white text-sm z-10">
-                                    <i className={`fa-solid ${
-                                        (activity.time_of_day || activity.time || '').toLowerCase().includes('morning') ? 'fa-sun' :
-                                        (activity.time_of_day || activity.time || '').toLowerCase().includes('evening') ? 'fa-moon' :
-                                        (activity.time_of_day || activity.time || '').toLowerCase().includes('lunch') ? 'fa-utensils' :
-                                        'fa-location-dot'
-                                    }`}></i>
-                                </div>
-
-                                {/* Content */}
-                                <div>
-                                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1 block">
-                                        {activity.time_of_day || activity.time}
-                                    </span>
-                                    <h3 className="text-base font-bold text-gray-900 mb-1">{activity.description}</h3>
-                                    <p className="text-sm text-gray-500 mb-2">{activity.location}</p>
-                                    {/* Optional: Add tags or more details if available */}
-                                </div>
-                            </div>
-                        ))}
-                        
-                        {/* Add Activity Button Placeholder */}
-                        <div className="relative pl-6 pt-4">
-                            <div className="absolute -left-[11px] top-6 w-5 h-5 rounded-full bg-gray-200 border-2 border-white"></div>
-                            <button className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 text-sm font-medium hover:border-blue-300 hover:text-blue-500 transition">
-                                Add Activity
+        <div className="grid lg:grid-cols-2 gap-6">
+            {/* Left Column: Map */}
+            <div className="order-2 lg:order-1">
+                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden sticky top-24">
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <span className="text-xs text-slate-400 uppercase tracking-wide">Route</span>
+                            <h3 className="font-semibold text-slate-900">Day {activeDay}</h3>
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-600 transition">
+                                <i className="fa-solid fa-minus text-xs"></i>
+                            </button>
+                            <button className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-600 transition">
+                                <i className="fa-solid fa-plus text-xs"></i>
                             </button>
                         </div>
+                    </div>
+                    <div className="h-[400px] lg:h-[500px]">
+                        <MapComponent activities={currentDayActivities} day={activeDay} destination={trip.destination} />
                     </div>
                 </div>
             </div>
 
-            {/* Right Column: Map */}
-            <div className="lg:col-span-7 space-y-6 h-[600px] sticky top-8">
-                <MapComponent activities={currentDayActivities} day={activeDay} />
+            {/* Right Column: Itinerary */}
+            <div className="order-1 lg:order-2">
+                {/* Day Selector */}
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                    {days.map((day) => {
+                        const dayNum = day.day_number || day.day;
+                        return (
+                            <button
+                                key={dayNum}
+                                onClick={() => setActiveDay(dayNum)}
+                                className={`flex-shrink-0 px-5 py-3 rounded-xl font-medium transition ${
+                                    activeDay === dayNum
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300'
+                                }`}
+                            >
+                                <span className="text-xs opacity-70">Day</span>
+                                <span className="block text-lg">{dayNum}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Activities */}
+                <div className="space-y-4">
+                    {currentDayActivities.map((activity, index) => {
+                        const timeInfo = getTimeIcon(activity.time_of_day || activity.time);
+                        return (
+                            <div 
+                                key={index} 
+                                className="bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-lg hover:border-blue-100 transition-all group"
+                            >
+                                <div className="flex gap-4">
+                                    {/* Time Icon */}
+                                    <div className={`w-12 h-12 ${timeInfo.bg} rounded-xl flex items-center justify-center text-white flex-shrink-0`}>
+                                        <i className={`fa-solid ${timeInfo.icon}`}></i>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-grow min-w-0">
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                                {activity.time_of_day || activity.time}
+                                            </span>
+                                            <button className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition">
+                                                <i className="fa-solid fa-ellipsis"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <h3 className="font-semibold text-slate-900 mb-2 leading-snug">
+                                            {activity.description}
+                                        </h3>
+                                        
+                                        {activity.location && (
+                                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                                <i className="fa-solid fa-location-dot text-slate-400"></i>
+                                                <span className="truncate">{activity.location}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Action buttons */}
+                                        <div className="flex gap-2 mt-3 pt-3 border-t border-slate-50">
+                                            <button className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1 transition">
+                                                <i className="fa-solid fa-directions"></i> Directions
+                                            </button>
+                                            <button className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1 transition">
+                                                <i className="fa-solid fa-bookmark"></i> Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    
+                    {/* Add Activity */}
+                    <button className="w-full py-4 bg-white border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-medium hover:border-blue-400 hover:text-blue-600 transition flex items-center justify-center gap-2">
+                        <i className="fa-solid fa-plus"></i> Add Activity
+                    </button>
+                </div>
             </div>
         </div>
     );

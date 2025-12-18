@@ -4,10 +4,9 @@ import api from '../../api/axios';
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
+    const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user' });
 
     useEffect(() => {
@@ -32,41 +31,38 @@ const AdminUsers = () => {
                 setUsers(users.filter(user => user.id !== id));
             } catch (error) {
                 console.error("Error deleting user", error);
-                alert("Failed to delete user");
             }
         }
     };
 
-    const handleCreateSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await api.post('/admin/users', formData);
-            setUsers([response.data, ...users]);
-            setShowCreateModal(false);
-            setFormData({ name: '', email: '', password: '', role: 'user' });
-        } catch (error) {
-            console.error("Error creating user", error);
-            alert("Failed to create user");
-        }
+    const handleCreateClick = () => {
+        setSelectedUser(null);
+        setFormData({ name: '', email: '', password: '', role: 'user' });
+        setIsEditing(false);
+        setShowModal(true);
     };
 
     const handleEditClick = (user) => {
         setSelectedUser(user);
         setFormData({ name: user.name, email: user.email, password: '', role: user.role });
-        setShowEditModal(true);
+        setIsEditing(true);
+        setShowModal(true);
     };
 
-    const handleEditSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.put(`/admin/users/${selectedUser.id}`, formData);
-            setUsers(users.map(u => u.id === selectedUser.id ? response.data : u));
-            setShowEditModal(false);
-            setSelectedUser(null);
+            if (isEditing) {
+                const response = await api.put(`/admin/users/${selectedUser.id}`, formData);
+                setUsers(users.map(u => u.id === selectedUser.id ? response.data : u));
+            } else {
+                const response = await api.post('/admin/users', formData);
+                setUsers([response.data, ...users]);
+            }
+            setShowModal(false);
             setFormData({ name: '', email: '', password: '', role: 'user' });
         } catch (error) {
-            console.error("Error updating user", error);
-            alert("Failed to update user");
+            console.error("Error saving user", error);
         }
     };
 
@@ -74,25 +70,30 @@ const AdminUsers = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    if (loading) return <div className="p-8 text-center">Loading users...</div>;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <i className="fa-solid fa-spinner animate-spin text-blue-600 text-2xl"></i>
+            </div>
+        );
+    }
 
     return (
         <div>
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end mb-4">
                 <button 
-                    onClick={() => setShowCreateModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+                    onClick={handleCreateClick}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
                 >
-                    <i className="fa-solid fa-plus"></i> Add New User
+                    <i className="fa-solid fa-plus"></i> Add User
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left border-collapse">
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                <table className="w-full text-left">
                     <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold">
-                            <th className="p-4">ID</th>
-                            <th className="p-4">Name</th>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-xs uppercase text-slate-500 font-semibold">
+                            <th className="p-4">User</th>
                             <th className="p-4">Email</th>
                             <th className="p-4">Role</th>
                             <th className="p-4">Joined</th>
@@ -101,28 +102,36 @@ const AdminUsers = () => {
                     </thead>
                     <tbody>
                         {users.map(user => (
-                            <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition">
-                                <td className="p-4 text-gray-500">#{user.id}</td>
-                                <td className="p-4 font-medium text-gray-900">{user.name}</td>
-                                <td className="p-4 text-gray-600">{user.email}</td>
+                            <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50 transition">
                                 <td className="p-4">
-                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 text-sm font-medium">
+                                            {user.name?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="font-medium text-slate-900">{user.name}</span>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-slate-600 text-sm">{user.email}</td>
+                                <td className="p-4">
+                                    <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                                        user.role === 'admin' 
+                                            ? 'bg-purple-50 text-purple-600' 
+                                            : 'bg-blue-50 text-blue-600'
+                                    }`}>
                                         {user.role || 'user'}
                                     </span>
                                 </td>
-                                <td className="p-4 text-gray-500 text-sm">{new Date(user.created_at).toLocaleDateString()}</td>
-                                <td className="p-4 text-right flex justify-end gap-2">
+                                <td className="p-4 text-slate-400 text-xs">{new Date(user.created_at).toLocaleDateString()}</td>
+                                <td className="p-4 text-right">
                                     <button 
                                         onClick={() => handleEditClick(user)}
-                                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition"
-                                        title="Edit User"
+                                        className="text-slate-400 hover:text-blue-600 p-2 transition"
                                     >
-                                        <i className="fa-solid fa-pen-to-square"></i>
+                                        <i className="fa-solid fa-pen"></i>
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(user.id)}
-                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition"
-                                        title="Delete User"
+                                        className="text-slate-400 hover:text-red-600 p-2 transition"
                                     >
                                         <i className="fa-solid fa-trash"></i>
                                     </button>
@@ -133,77 +142,79 @@ const AdminUsers = () => {
                 </table>
             </div>
 
-            {/* Create/Edit Modal */}
-            {(showCreateModal || showEditModal) && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900">{showCreateModal ? 'Add New User' : 'Edit User'}</h2>
-                            <button onClick={() => { setShowCreateModal(false); setShowEditModal(false); }} className="text-gray-400 hover:text-gray-600">
-                                <i className="fa-solid fa-xmark text-xl"></i>
+                            <h2 className="text-lg font-bold text-slate-900">{isEditing ? 'Edit User' : 'Add User'}</h2>
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
+                                <i className="fa-solid fa-xmark text-lg"></i>
                             </button>
                         </div>
                         
-                        <form onSubmit={showCreateModal ? handleCreateSubmit : handleEditSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
                                 <input 
                                     type="text" 
                                     name="name" 
                                     value={formData.name} 
                                     onChange={handleChange}
-                                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-sm"
                                     required 
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                                 <input 
                                     type="email" 
                                     name="email" 
                                     value={formData.email} 
                                     onChange={handleChange}
-                                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-sm"
                                     required 
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Password {showEditModal && '(Leave blank to keep current)'}</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Password {isEditing && <span className="text-slate-400 font-normal">(leave blank to keep)</span>}
+                                </label>
                                 <input 
                                     type="password" 
                                     name="password" 
                                     value={formData.password} 
                                     onChange={handleChange}
-                                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    {...(showCreateModal ? { required: true } : {})}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-sm"
+                                    {...(!isEditing ? { required: true } : {})}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
                                 <select 
                                     name="role" 
                                     value={formData.role} 
                                     onChange={handleChange}
-                                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-sm"
                                 >
                                     <option value="user">User</option>
                                     <option value="admin">Admin</option>
                                 </select>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4">
+                            <div className="flex gap-3 pt-4">
                                 <button 
                                     type="button" 
-                                    onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}
-                                    className="px-6 py-2 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition"
+                                    onClick={() => setShowModal(false)}
+                                    className="flex-1 py-3 rounded-xl text-slate-600 hover:bg-slate-100 font-medium transition"
                                 >
                                     Cancel
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium transition"
+                                    className="flex-1 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-medium transition"
                                 >
-                                    {showCreateModal ? 'Create User' : 'Update User'}
+                                    {isEditing ? 'Update' : 'Create'}
                                 </button>
                             </div>
                         </form>

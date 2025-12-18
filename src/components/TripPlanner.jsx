@@ -19,10 +19,9 @@ const TripPlanner = () => {
     });
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
-    const [step, setStep] = useState(1); // 1: Details, 2: AI Generation, 3: Your Itinerary
+    const [step, setStep] = useState(1);
     const [showAuthModal, setShowAuthModal] = useState(false);
 
-    // City autocomplete state
     const [citySuggestions, setCitySuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isLoadingCities, setIsLoadingCities] = useState(false);
@@ -32,21 +31,20 @@ const TripPlanner = () => {
     const inputRef = useRef(null);
 
     const budgetOptions = [
-        { id: 'Budget-friendly', label: 'Budget', range: '$50-100/day', icon: 'fa-wallet', color: 'text-green-500' },
-        { id: 'Moderate', label: 'Moderate', range: '$100-200/day', icon: 'fa-credit-card', color: 'text-blue-500' },
-        { id: 'Luxury', label: 'Luxury', range: '$200+/day', icon: 'fa-gem', color: 'text-purple-500' },
+        { id: 'Budget-friendly', label: 'Budget', range: '$50-100/day', icon: 'fa-wallet' },
+        { id: 'Moderate', label: 'Moderate', range: '$100-200/day', icon: 'fa-credit-card' },
+        { id: 'Luxury', label: 'Luxury', range: '$200+/day', icon: 'fa-gem' },
     ];
 
     const interestOptions = [
-        { id: 'Adventure', label: 'Adventure', icon: 'fa-mountain', color: 'text-orange-500' },
-        { id: 'Relaxing', label: 'Relaxing', icon: 'fa-spa', color: 'text-blue-400' },
-        { id: 'Cultural', label: 'Cultural', icon: 'fa-landmark', color: 'text-purple-500' },
-        { id: 'Family', label: 'Family', icon: 'fa-users', color: 'text-green-500' },
-        { id: 'Foodie', label: 'Foodie', icon: 'fa-utensils', color: 'text-red-500' },
-        { id: 'Photography', label: 'Photography', icon: 'fa-camera', color: 'text-pink-500' },
+        { id: 'Adventure', label: 'Adventure', icon: 'fa-mountain' },
+        { id: 'Relaxing', label: 'Relaxing', icon: 'fa-spa' },
+        { id: 'Cultural', label: 'Cultural', icon: 'fa-landmark' },
+        { id: 'Family', label: 'Family', icon: 'fa-users' },
+        { id: 'Foodie', label: 'Foodie', icon: 'fa-utensils' },
+        { id: 'Photography', label: 'Photography', icon: 'fa-camera' },
     ];
 
-    // Debounce function for city search
     const debounce = (func, wait) => {
         let timeout;
         return (...args) => {
@@ -55,7 +53,6 @@ const TripPlanner = () => {
         };
     };
 
-    // Search cities with debounce
     const searchCities = useCallback(
         debounce(async (query) => {
             if (query.length < 2) {
@@ -63,7 +60,6 @@ const TripPlanner = () => {
                 setShowSuggestions(false);
                 return;
             }
-
             setIsLoadingCities(true);
             try {
                 const response = await api.get(`/cities/search?q=${encodeURIComponent(query)}&limit=8`);
@@ -71,7 +67,6 @@ const TripPlanner = () => {
                 setShowSuggestions(true);
                 setSelectedCityIndex(-1);
             } catch (err) {
-                console.error('Error searching cities:', err);
                 setCitySuggestions([]);
             } finally {
                 setIsLoadingCities(false);
@@ -80,7 +75,6 @@ const TripPlanner = () => {
         []
     );
 
-    // Handle city selection
     const handleCitySelect = (city) => {
         setSelectedCity(city);
         setFormData(prev => ({ ...prev, destination: city.label }));
@@ -88,28 +82,20 @@ const TripPlanner = () => {
         setCitySuggestions([]);
     };
 
-    // Handle keyboard navigation in suggestions
     const handleKeyDown = (e) => {
         if (!showSuggestions || citySuggestions.length === 0) return;
-
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                setSelectedCityIndex(prev => 
-                    prev < citySuggestions.length - 1 ? prev + 1 : 0
-                );
+                setSelectedCityIndex(prev => prev < citySuggestions.length - 1 ? prev + 1 : 0);
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                setSelectedCityIndex(prev => 
-                    prev > 0 ? prev - 1 : citySuggestions.length - 1
-                );
+                setSelectedCityIndex(prev => prev > 0 ? prev - 1 : citySuggestions.length - 1);
                 break;
             case 'Enter':
                 e.preventDefault();
-                if (selectedCityIndex >= 0) {
-                    handleCitySelect(citySuggestions[selectedCityIndex]);
-                }
+                if (selectedCityIndex >= 0) handleCitySelect(citySuggestions[selectedCityIndex]);
                 break;
             case 'Escape':
                 setShowSuggestions(false);
@@ -117,7 +103,6 @@ const TripPlanner = () => {
         }
     };
 
-    // Close suggestions when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (suggestionRef.current && !suggestionRef.current.contains(e.target) &&
@@ -141,8 +126,6 @@ const TripPlanner = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        
-        // Trigger city search for destination field
         if (name === 'destination') {
             setSelectedCity(null);
             searchCities(value);
@@ -150,75 +133,60 @@ const TripPlanner = () => {
     };
 
     const calculateDuration = () => {
-        if (!formData.startDate || !formData.endDate) return 3; // Default
-        const start = new Date(formData.startDate);
-        const end = new Date(formData.endDate);
-        const diffTime = Math.abs(end - start);
+        if (!formData.startDate || !formData.endDate) return 3;
+        const diffTime = Math.abs(new Date(formData.endDate) - new Date(formData.startDate));
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         return diffDays > 0 ? diffDays : 1;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!user) {
-            setShowAuthModal(true);
-            return;
-        }
-
+        if (!user) { setShowAuthModal(true); return; }
         setError(null);
         setResult(null);
-        setStep(2); // AI Generation Step
-
-        const duration = calculateDuration();
-        const payload = {
-            destination: formData.destination,
-            duration: duration,
-            budget: formData.budget,
-            interests: formData.interests.join(', ')
-        };
+        setStep(2);
 
         try {
-            const response = await api.post('/plan', payload);
-
+            const response = await api.post('/plan', {
+                destination: formData.destination,
+                duration: calculateDuration(),
+                budget: formData.budget,
+                interests: formData.interests.join(', ')
+            });
             if (response.status === 200) {
                 setResult(response.data);
-                setStep(3); // Itinerary Step
+                setStep(3);
             } else {
                 setError(response.data.error || 'Failed to generate itinerary');
                 setStep(1);
             }
         } catch (err) {
-            console.error(err);
             setError('An error occurred while generating the itinerary.');
             setStep(1);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col relative">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
             <Navbar />
 
             {/* Auth Modal */}
             {showAuthModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center transform transition-all scale-100">
-                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i className="fa-solid fa-user-lock text-2xl"></i>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center">
+                        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i className="fa-solid fa-user-lock text-xl"></i>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
-                        <p className="text-gray-500 mb-8">Please log in or create an account to generate and save your personalized travel itinerary.</p>
-                        <div className="flex flex-col gap-3">
-                            <Link to="/login" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                                Log In
+                        <h2 className="text-xl font-bold text-slate-900 mb-2">Login Required</h2>
+                        <p className="text-slate-500 text-sm mb-6">Sign in to generate and save your personalized itinerary.</p>
+                        <div className="space-y-3">
+                            <Link to="/login" className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition">
+                                Sign In
                             </Link>
-                            <Link to="/register" className="w-full bg-white border-2 border-gray-200 hover:border-blue-200 text-gray-700 font-bold py-3 rounded-xl transition">
+                            <Link to="/register" className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-xl transition">
                                 Create Account
                             </Link>
-                            <button 
-                                onClick={() => setShowAuthModal(false)}
-                                className="mt-2 text-gray-400 hover:text-gray-600 text-sm font-medium transition"
-                            >
+                            <button onClick={() => setShowAuthModal(false)} className="text-slate-400 hover:text-slate-600 text-sm">
                                 Cancel
                             </button>
                         </div>
@@ -226,256 +194,243 @@ const TripPlanner = () => {
                 </div>
             )}
 
-            <main className="flex-grow container mx-auto px-4 py-12 max-w-5xl">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Plan Your Perfect Trip with AI</h1>
-                    <p className="text-lg text-gray-500 max-w-2xl mx-auto">Tell us your preferences and let our AI create a personalized itinerary tailored just for you</p>
-                </div>
-
-                {/* Stepper */}
-                <div className="flex justify-center items-center mb-12 text-sm font-medium text-gray-500">
-                    <div className={`flex items-center ${step >= 1 ? 'text-blue-600' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
-                        Trip Details
-                    </div>
-                    <div className={`w-16 h-px mx-4 ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
-                    <div className={`flex items-center ${step >= 2 ? 'text-blue-600' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
-                        AI Generation
-                    </div>
-                    <div className={`w-16 h-px mx-4 ${step >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
-                    <div className={`flex items-center ${step >= 3 ? 'text-blue-600' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${step >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>3</div>
-                        Your Itinerary
-                    </div>
-                </div>
-
-                {step === 1 && (
-                    <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-                        {error && (
-                            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 animate-fade-in">
-                                <i className="fa-solid fa-circle-exclamation text-xl"></i>
-                                <span className="font-medium">{error}</span>
-                            </div>
-                        )}
-                        <form onSubmit={handleSubmit} className="space-y-8">
-                            {/* Destination with Autocomplete */}
-                            <div>
-                                <label className="block text-base font-semibold text-gray-900 mb-3">Where do you want to go?</label>
-                                <div className="relative">
-                                    <input 
-                                        ref={inputRef}
-                                        type="text" 
-                                        name="destination"
-                                        value={formData.destination}
-                                        onChange={handleChange}
-                                        onKeyDown={handleKeyDown}
-                                        onFocus={() => formData.destination.length >= 2 && citySuggestions.length > 0 && setShowSuggestions(true)}
-                                        placeholder="Start typing a city name..." 
-                                        className="w-full pl-6 pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-700 placeholder-gray-400"
-                                        autoComplete="off"
-                                        required
-                                    />
-                                    {isLoadingCities ? (
-                                        <i className="fa-solid fa-spinner fa-spin absolute right-6 top-1/2 transform -translate-y-1/2 text-blue-500"></i>
-                                    ) : selectedCity ? (
-                                        <img 
-                                            src={selectedCity.flag_url} 
-                                            alt={selectedCity.country}
-                                            className="absolute right-6 top-1/2 transform -translate-y-1/2 w-6 h-4 object-cover rounded shadow-sm"
-                                        />
-                                    ) : (
-                                        <i className="fa-solid fa-location-dot absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                    )}
-                                    
-                                    {/* Autocomplete Dropdown */}
-                                    {showSuggestions && citySuggestions.length > 0 && (
-                                        <div 
-                                            ref={suggestionRef}
-                                            className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden animate-fade-in"
-                                        >
-                                            {citySuggestions.map((city, index) => (
-                                                <button
-                                                    key={city.id}
-                                                    type="button"
-                                                    onClick={() => handleCitySelect(city)}
-                                                    className={`w-full px-4 py-3 flex items-center gap-4 hover:bg-blue-50 transition text-left ${
-                                                        index === selectedCityIndex ? 'bg-blue-50' : ''
-                                                    } ${index !== citySuggestions.length - 1 ? 'border-b border-gray-100' : ''}`}
-                                                >
-                                                    <img 
-                                                        src={city.flag_url} 
-                                                        alt={city.country}
-                                                        className="w-8 h-5 object-cover rounded shadow-sm flex-shrink-0"
-                                                        onError={(e) => { e.target.style.display = 'none'; }}
-                                                    />
-                                                    <div className="flex-grow min-w-0">
-                                                        <div className="font-medium text-gray-900 truncate">{city.city}</div>
-                                                        <div className="text-sm text-gray-500 truncate">{city.country}</div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                {selectedCity && (
-                                    <p className="mt-2 text-sm text-green-600 flex items-center gap-2">
-                                        <i className="fa-solid fa-check-circle"></i>
-                                        <span>{selectedCity.flag_emoji} {selectedCity.city}, {selectedCity.country}</span>
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Dates */}
-                            <div>
-                                <label className="block text-base font-semibold text-gray-900 mb-3">When are you traveling?</label>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-2 text-xs text-gray-500 z-10">Check-in</span>
-                                        <DatePicker
-                                            selected={formData.startDate}
-                                            onChange={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
-                                            selectsStart
-                                            startDate={formData.startDate}
-                                            endDate={formData.endDate}
-                                            minDate={new Date()}
-                                            dateFormat="MMMM d, yyyy"
-                                            className="w-full pl-4 pr-10 pt-6 pb-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-700 cursor-pointer"
-                                            wrapperClassName="w-full"
-                                            placeholderText="Select Date"
-                                            required
-                                        />
-                                        <i className="fa-regular fa-calendar absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10"></i>
-                                    </div>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-2 text-xs text-gray-500 z-10">Check-out</span>
-                                        <DatePicker
-                                            selected={formData.endDate}
-                                            onChange={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
-                                            selectsEnd
-                                            startDate={formData.startDate}
-                                            endDate={formData.endDate}
-                                            minDate={formData.startDate || new Date()}
-                                            dateFormat="MMMM d, yyyy"
-                                            className="w-full pl-4 pr-10 pt-6 pb-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-700 cursor-pointer"
-                                            wrapperClassName="w-full"
-                                            placeholderText="Select Date"
-                                            required
-                                        />
-                                        <i className="fa-regular fa-calendar absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Budget */}
-                            <div>
-                                <label className="block text-base font-semibold text-gray-900 mb-3">What's your budget range?</label>
-                                <div className="grid md:grid-cols-3 gap-4">
-                                    {budgetOptions.map((option) => (
-                                        <div 
-                                            key={option.id}
-                                            onClick={() => setFormData(prev => ({ ...prev, budget: option.id }))}
-                                            className={`cursor-pointer p-6 rounded-xl border-2 transition flex flex-col items-center text-center ${formData.budget === option.id ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-blue-200'}`}
-                                        >
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${option.color} bg-white shadow-sm`}>
-                                                <i className={`fa-solid ${option.icon}`}></i>
-                                            </div>
-                                            <div className="font-bold text-gray-900">{option.label}</div>
-                                            <div className="text-sm text-gray-500">{option.range}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Travel Style */}
-                            <div>
-                                <label className="block text-base font-semibold text-gray-900 mb-3">What's your travel style? (Select all that apply)</label>
-                                <div className="flex flex-wrap gap-3">
-                                    {interestOptions.map((option) => (
-                                        <button
-                                            key={option.id}
-                                            type="button"
-                                            onClick={() => handleInterestToggle(option.id)}
-                                            className={`px-6 py-3 rounded-full border transition flex items-center gap-2 font-medium ${formData.interests.includes(option.id) ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
-                                        >
-                                            <i className={`fa-solid ${option.icon} ${formData.interests.includes(option.id) ? 'text-blue-600' : option.color}`}></i>
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Submit Button */}
-                            <button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-lg font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
-                                <i className="fa-solid fa-wand-magic-sparkles"></i> Generate My Custom Itinerary
-                            </button>
-                            <p className="text-center text-gray-400 text-sm">Usually takes 30-60 seconds to generate your personalized trip</p>
-                        </form>
-                    </div>
-                )}
-
-                {step === 2 && (
-                    <div className="bg-white rounded-2xl shadow-xl p-12 text-center min-h-[400px] flex flex-col items-center justify-center">
-                        <div className="relative w-32 h-32 mb-8">
-                            {/* Track */}
-                            <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
-                            
-                            {/* Rotating Container */}
-                            <div className="absolute inset-0 animate-spin" style={{ animationDuration: '1.5s' }}>
-                                {/* Active Trail (Half Circle) */}
-                                <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-blue-600 border-r-blue-600 border-b-transparent border-l-transparent transform rotate-[-45deg]"></div>
-                                
-                                {/* Plane Icon - Leading the trail */}
-                                <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-[20%] rotate-45">
-                                    <i className="fa-solid fa-plane text-blue-600 text-2xl drop-shadow-sm"></i>
-                                </div>
-                            </div>
-                            
-                            {/* Center Logo */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <img src="/logo.png" alt="Toplago" className="w-16 h-16 object-contain animate-pulse" />
-                            </div>
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Crafting your perfect itinerary...</h2>
-                        <p className="text-gray-500 max-w-md">Our AI is analyzing your preferences to build the best trip to {formData.destination}.</p>
-                    </div>
-                )}
-
-                {step === 3 && result && (
-                    <div className="animate-fade-in">
-                        <div className="bg-blue-600 p-8 text-white rounded-2xl shadow-xl mb-8 flex justify-between items-start">
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">{result.trip_title}</h2>
-                                <p className="text-blue-100 text-lg">{result.summary}</p>
-                            </div>
-                            <div className="flex gap-2">
-                                {result.id && (
-                                    <Link to={`/trips/${result.id}`} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition backdrop-blur-sm flex items-center gap-2">
-                                        <i className="fa-solid fa-eye"></i> View Details
-                                    </Link>
-                                )}
-                                <button onClick={() => setStep(1)} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition backdrop-blur-sm">
-                                    Plan Another Trip
-                                </button>
-                            </div>
-                        </div>
+            <main className="flex-grow pt-20">
+                {/* Header */}
+                <div className="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-12">
+                    <div className="container mx-auto px-6 text-center">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-3">Plan Your Perfect Trip</h1>
+                        <p className="text-slate-300 max-w-xl mx-auto">Tell us your preferences and let AI create a personalized itinerary</p>
                         
-                        <ItineraryView trip={result} />
-                    </div>
-                )}
-                
-                {step === 3 && error && (
-                     <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-                        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i className="fa-solid fa-triangle-exclamation text-2xl"></i>
+                        {/* Stepper */}
+                        <div className="flex justify-center items-center gap-4 mt-8">
+                            {['Details', 'Generating', 'Itinerary'].map((label, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                        step > i + 1 ? 'bg-green-500 text-white' :
+                                        step === i + 1 ? 'bg-blue-500 text-white' : 'bg-slate-700 text-slate-400'
+                                    }`}>
+                                        {step > i + 1 ? <i className="fa-solid fa-check text-xs"></i> : i + 1}
+                                    </div>
+                                    <span className={`text-sm hidden sm:block ${step === i + 1 ? 'text-white' : 'text-slate-400'}`}>{label}</span>
+                                    {i < 2 && <div className={`w-8 h-px ${step > i + 1 ? 'bg-green-500' : 'bg-slate-700'}`}></div>}
+                                </div>
+                            ))}
                         </div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-                        <p className="text-gray-500 mb-6">{error}</p>
-                        <button onClick={() => setStep(1)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition">
-                            Try Again
-                        </button>
                     </div>
-                )}
+                </div>
+
+                <div className="container mx-auto px-6 py-8 max-w-3xl">
+                    {step === 1 && (
+                        <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100">
+                            {error && (
+                                <div className="mb-6 bg-red-50 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 text-sm">
+                                    <i className="fa-solid fa-circle-exclamation"></i>
+                                    {error}
+                                </div>
+                            )}
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Destination */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Where do you want to go?</label>
+                                    <div className="relative">
+                                        <input 
+                                            ref={inputRef}
+                                            type="text" 
+                                            name="destination"
+                                            value={formData.destination}
+                                            onChange={handleChange}
+                                            onKeyDown={handleKeyDown}
+                                            onFocus={() => formData.destination.length >= 2 && citySuggestions.length > 0 && setShowSuggestions(true)}
+                                            placeholder="Start typing a city..." 
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                            autoComplete="off"
+                                            required
+                                        />
+                                        {isLoadingCities ? (
+                                            <i className="fa-solid fa-spinner animate-spin absolute right-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                                        ) : selectedCity ? (
+                                            <img src={selectedCity.flag_url} alt="" className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-4 object-cover rounded"/>
+                                        ) : (
+                                            <i className="fa-solid fa-location-dot absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                        )}
+                                        
+                                        {showSuggestions && citySuggestions.length > 0 && (
+                                            <div ref={suggestionRef} className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+                                                {citySuggestions.map((city, index) => (
+                                                    <button
+                                                        key={city.id}
+                                                        type="button"
+                                                        onClick={() => handleCitySelect(city)}
+                                                        className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-blue-50 transition text-left ${
+                                                            index === selectedCityIndex ? 'bg-blue-50' : ''
+                                                        } ${index !== citySuggestions.length - 1 ? 'border-b border-slate-100' : ''}`}
+                                                    >
+                                                        <img src={city.flag_url} alt="" className="w-6 h-4 object-cover rounded shadow-sm"/>
+                                                        <div>
+                                                            <div className="font-medium text-slate-900">{city.city}</div>
+                                                            <div className="text-xs text-slate-500">{city.country}</div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Dates */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">When are you traveling?</label>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="relative">
+                                            <DatePicker
+                                                selected={formData.startDate}
+                                                onChange={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
+                                                selectsStart
+                                                startDate={formData.startDate}
+                                                endDate={formData.endDate}
+                                                minDate={new Date()}
+                                                dateFormat="MMM d, yyyy"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                                placeholderText="Start date"
+                                                required
+                                            />
+                                            <i className="fa-regular fa-calendar absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                        </div>
+                                        <div className="relative">
+                                            <DatePicker
+                                                selected={formData.endDate}
+                                                onChange={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
+                                                selectsEnd
+                                                startDate={formData.startDate}
+                                                endDate={formData.endDate}
+                                                minDate={formData.startDate || new Date()}
+                                                dateFormat="MMM d, yyyy"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                                placeholderText="End date"
+                                                required
+                                            />
+                                            <i className="fa-regular fa-calendar absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Budget */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Budget</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {budgetOptions.map((option) => (
+                                            <button 
+                                                key={option.id}
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, budget: option.id }))}
+                                                className={`p-4 rounded-xl border-2 transition text-center ${
+                                                    formData.budget === option.id 
+                                                        ? 'border-blue-500 bg-blue-50' 
+                                                        : 'border-slate-100 hover:border-slate-200'
+                                                }`}
+                                            >
+                                                <i className={`fa-solid ${option.icon} text-lg mb-2 ${formData.budget === option.id ? 'text-blue-600' : 'text-slate-400'}`}></i>
+                                                <div className="font-medium text-slate-900 text-sm">{option.label}</div>
+                                                <div className="text-xs text-slate-500">{option.range}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Interests */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Travel style</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {interestOptions.map((option) => (
+                                            <button
+                                                key={option.id}
+                                                type="button"
+                                                onClick={() => handleInterestToggle(option.id)}
+                                                className={`px-4 py-2 rounded-full border transition flex items-center gap-2 text-sm ${
+                                                    formData.interests.includes(option.id) 
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                                                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                                }`}
+                                            >
+                                                <i className={`fa-solid ${option.icon}`}></i>
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Submit */}
+                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-4 rounded-xl transition flex justify-center items-center gap-2">
+                                    <i className="fa-solid fa-wand-magic-sparkles"></i> Generate Itinerary
+                                </button>
+                                <p className="text-center text-slate-400 text-xs">Usually takes 30-60 seconds</p>
+                            </form>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="bg-white rounded-2xl p-12 text-center">
+                            <div className="relative w-24 h-24 mx-auto mb-6">
+                                <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                                <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <img src="/logo.png" alt="Toplago" className="w-12 h-12 object-contain"/>
+                                </div>
+                            </div>
+                            <h2 className="text-xl font-bold text-slate-900 mb-2">Crafting your itinerary...</h2>
+                            <p className="text-slate-500">AI is building the perfect trip to {formData.destination}</p>
+                        </div>
+                    )}
+
+                    {step === 3 && result && (
+                        <div className="max-w-6xl mx-auto">
+                            {/* Trip Header Card */}
+                            <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-slate-900 mb-2">{result.trip_title}</h2>
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                                                <i className="fa-solid fa-location-dot"></i> {result.destination}
+                                            </span>
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium">
+                                                <i className="fa-regular fa-calendar"></i> {result.duration} days
+                                            </span>
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
+                                                <i className="fa-solid fa-wallet"></i> {result.budget}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {result.id && (
+                                            <Link to={`/trips/${result.id}`} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                                                <i className="fa-solid fa-eye"></i> View Full Trip
+                                            </Link>
+                                        )}
+                                        <button onClick={() => setStep(1)} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2">
+                                            <i className="fa-solid fa-plus"></i> New Trip
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <ItineraryView trip={result} />
+                        </div>
+                    )}
+
+                    {step === 3 && error && (
+                        <div className="bg-white rounded-2xl p-12 text-center">
+                            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i className="fa-solid fa-triangle-exclamation text-xl"></i>
+                            </div>
+                            <h2 className="text-lg font-bold text-slate-900 mb-2">Something went wrong</h2>
+                            <p className="text-slate-500 mb-6">{error}</p>
+                            <button onClick={() => setStep(1)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition">
+                                Try Again
+                            </button>
+                        </div>
+                    )}
+                </div>
             </main>
             <Footer />
         </div>

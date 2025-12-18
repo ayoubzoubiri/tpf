@@ -29,10 +29,13 @@ const TripDetails = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+            <div className="min-h-screen bg-slate-50 flex flex-col">
                 <Navbar />
-                <main className="flex-grow flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                <main className="flex-grow flex items-center justify-center pt-16">
+                    <div className="text-center">
+                        <i className="fa-solid fa-spinner animate-spin text-blue-600 text-3xl mb-4"></i>
+                        <p className="text-slate-500">Loading trip...</p>
+                    </div>
                 </main>
                 <Footer />
             </div>
@@ -41,17 +44,19 @@ const TripDetails = () => {
 
     if (error || !trip) {
         return (
-            <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+            <div className="min-h-screen bg-slate-50 flex flex-col">
                 <Navbar />
-                <main className="flex-grow flex flex-col items-center justify-center p-4">
-                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
-                        <i className="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <main className="flex-grow flex flex-col items-center justify-center p-6 pt-16">
+                    <div className="bg-white rounded-2xl p-12 text-center max-w-md">
+                        <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i className="fa-solid fa-triangle-exclamation text-xl"></i>
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-900 mb-2">Trip Not Found</h2>
+                        <p className="text-slate-500 mb-6">{error || "The trip you are looking for does not exist."}</p>
+                        <Link to="/mytrips" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition">
+                            <i className="fa-solid fa-arrow-left"></i> Back to My Trips
+                        </Link>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Trip Not Found</h2>
-                    <p className="text-gray-500 mb-6">{error || "The trip you are looking for does not exist."}</p>
-                    <Link to="/mytrips" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition">
-                        Back to My Trips
-                    </Link>
                 </main>
                 <Footer />
             </div>
@@ -59,32 +64,47 @@ const TripDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
             <Navbar />
 
-            <main className="flex-grow container mx-auto px-4 py-12 max-w-5xl">
-                <div className="mb-8">
-                    <Link to="/mytrips" className="text-gray-500 hover:text-blue-600 font-medium flex items-center gap-2 mb-4 transition">
-                        <i className="fa-solid fa-arrow-left"></i> Back to My Trips
+            <main className="flex-grow pt-20">
+                <div className="container mx-auto px-6 py-8 max-w-5xl">
+                    {/* Back Link */}
+                    <Link to="/mytrips" className="inline-flex items-center gap-2 text-slate-500 hover:text-blue-600 font-medium mb-6 transition">
+                        <i className="fa-solid fa-arrow-left text-sm"></i> Back to My Trips
                     </Link>
-                </div>
 
-                <div className="bg-blue-600 p-8 text-white rounded-2xl shadow-xl mb-8 flex justify-between items-start animate-fade-in">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2">{trip.trip_title}</h1>
-                        <p className="text-blue-100 text-lg">{trip.summary}</p>
-                        <div className="flex gap-4 mt-4 text-sm font-medium text-blue-200">
-                            <span className="flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> {trip.destination}</span>
-                            <span className="flex items-center gap-1"><i className="fa-regular fa-calendar"></i> {trip.duration} Days</span>
-                            <span className="flex items-center gap-1"><i className="fa-solid fa-wallet"></i> {trip.budget}</span>
+                    {/* Trip Header */}
+                    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 md:p-8 text-white rounded-2xl mb-8">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold mb-2">{trip.trip_title}</h1>
+                                <p className="text-slate-300 mb-4">{trip.summary}</p>
+                                <div className="flex flex-wrap gap-4 text-sm text-slate-300">
+                                    <span className="flex items-center gap-2">
+                                        <i className="fa-solid fa-location-dot text-blue-400"></i> {trip.destination}
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                        <i className="fa-regular fa-calendar text-blue-400"></i> {trip.duration} Days
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                        <i className="fa-solid fa-wallet text-blue-400"></i> {trip.budget}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                                    <i className="fa-solid fa-share-nodes"></i> Share
+                                </button>
+                                <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                                    <i className="fa-solid fa-download"></i> Export
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <button className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition backdrop-blur-sm flex items-center gap-2">
-                        <i className="fa-solid fa-share-nodes"></i> Share
-                    </button>
+                    
+                    <ItineraryView trip={trip} />
                 </div>
-                
-                <ItineraryView trip={trip} />
             </main>
 
             <Footer />
