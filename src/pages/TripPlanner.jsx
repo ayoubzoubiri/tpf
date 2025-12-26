@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import api from '../api/axios';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { useTrip } from '../context/TripContext';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 
 // Sub-components
 import AuthModal from '../components/trip-planner/AuthModal';
@@ -14,57 +14,29 @@ import ErrorState from '../components/trip-planner/ErrorState';
 
 const TripPlanner = () => {
     const { user } = useAuth();
-    const [formData, setFormData] = useState({ destination: '', startDate: null, endDate: null, budget: 'Moderate', interests:[] });
-    const [result, setResult] = useState(null);
-    const [error, setError] = useState(null);
-    const [step, setStep] = useState(1);
+    const { 
+        plannerStep, 
+        plannerData, 
+        setPlannerData, 
+        generatedTrip, 
+        plannerLoading, // Note: LoadingState component uses this implicitly via step logic usually, but here we can use it if needed. 
+                       // Actually, the original code used step === 2 for loading. 
+                       // Our context sets step to 2 when loading. So we rely on plannerStep.
+        plannerError, 
+        generateTrip,
+        resetPlanner
+    } = useTrip();
+
     const [showAuthModal, setShowAuthModal] = useState(false);
 
-    const calculateDuration = () => {
-        if (!formData.startDate || !formData.endDate) return 3;
-        const diffTime = Math.abs(new Date(formData.endDate) - new Date(formData.startDate));
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        // Add 1 to include both start and end dates (Dec 25-27 = 3 days, not 2)
-        return diffDays > 0 ? diffDays + 1 : 1;
-    };
+    // Reset planner on mount if coming back? Or keep state?
+    // User often wants to keep state if they navigate away and back.
+    // If we want to reset, use useEffect. For now, let's keep it (persistence is a feature).
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (!user) { setShowAuthModal(true); return; }
-        setError(null);
-        setResult(null);
-        setStep(2);
-
-        try {
-            const response = await api.post('/plan', {
-                destination: formData.destination,
-                duration: calculateDuration(),
-                budget: formData.budget,
-                interests: formData.interests.join(', ')
-            });
-            if (response.status === 200 || response.status === 201) {
-                setResult(response.data);
-                setStep(3);
-            } else {
-                setError(response.data.error || 'Failed to generate itinerary');
-                setStep(1);
-            }
-        } catch (err) {
-            console.error('Trip generation error:', err);
-            console.error('Full response data:', err.response?.data);
-            const details = err.response?.data?.details;
-            let errorMessage = err.response?.data?.error 
-                || err.response?.data?.message 
-                || err.message 
-                || 'An error occurred while generating the itinerary.';
-            
-            if (details) {
-                errorMessage += ` (${details})`;
-            }
-            setError(errorMessage);
-            setStep(1); 
-            setStep(3);
-        }
+        generateTrip();
     };
 
     return (
@@ -74,17 +46,27 @@ const TripPlanner = () => {
             {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
             <main className="flex-grow pt-20">
-                <HeroSection step={step} />
+                <HeroSection step={plannerStep} />
 
-                <div className={`px-6 py-8 mx-auto ${step === 3 ? 'w-full' : 'container max-w-3xl'}`}>
-                    {step === 1 && ( <TripForm  formData={formData} setFormData={setFormData} onSubmit={handleSubmit} error={error}/>)}
+                <div className={`px-6 py-8 mx-auto ${plannerStep === 3 ? 'w-full' : 'container max-w-3xl'}`}>
+                    {plannerStep === 1 && ( 
+                        <TripForm  
+                            formData={plannerData} 
+                            setFormData={setPlannerData} 
+                            onSubmit={handleSubmit} 
+                            error={plannerError}
+                        />
+                    )}
 
-                    {step === 2 && <LoadingState destination={formData.destination} />}
+                    {plannerStep === 2 && <LoadingState destination={plannerData.destination} />}
 
-                    {step === 3 && result && (
-                        <TripResults result={result} onReset={() => setStep(1)} />)}
+                    {plannerStep === 3 && generatedTrip && (
+                        <TripResults result={generatedTrip} onReset={resetPlanner} />
+                    )}
 
-                    {step === 3 && error && (<ErrorState error={error} onRetry={() => setStep(1)} />)}
+                    {plannerStep === 3 && plannerError && (
+                        <ErrorState error={plannerError} onRetry={resetPlanner} />
+                    )}
                 </div>
             </main>
             <Footer />

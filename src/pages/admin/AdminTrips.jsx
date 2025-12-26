@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../api/axios';
+import { useAdmin } from '../../context/AdminContext';
 import TripsTable from '../../components/admin/trips/TripsTable';
 import TripModal from '../../components/admin/trips/TripModal';
 
 const AdminTrips = () => {
-    const [trips, setTrips] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { trips, loading, fetchTrips, deleteTrip, updateTrip } = useAdmin();
     const [showModal, setShowModal] = useState(false);
     const [selectedTrip, setSelectedTrip] = useState(null);
     const [formData, setFormData] = useState({ trip_title: '', destination: '', duration: 1 });
@@ -13,28 +12,6 @@ const AdminTrips = () => {
     useEffect(() => {
         fetchTrips();
     }, []);
-
-    const fetchTrips = async () => {
-        try {
-            const response = await api.get('/admin/trips');
-            setTrips(response.data);
-        } catch (error) {
-            console.error("Error fetching trips", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this trip?')) {
-            try {
-                await api.delete(`/admin/trips/${id}`);
-                setTrips(trips.filter(trip => trip.id !== id));
-            } catch (error) {
-                console.error("Error deleting trip", error);
-            }
-        }
-    };
 
     const handleEditClick = (trip) => {
         setSelectedTrip(trip);
@@ -44,12 +21,9 @@ const AdminTrips = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            const response = await api.put(`/admin/trips/${selectedTrip.id}`, formData);
-            setTrips(trips.map(t => t.id === selectedTrip.id ? { ...t, ...response.data } : t));
+        const success = await updateTrip(selectedTrip.id, formData);
+        if (success) {
             setShowModal(false);
-        } catch (error) {
-            console.error("Error updating trip", error);
         }
     };
 
@@ -70,7 +44,7 @@ const AdminTrips = () => {
             <TripsTable 
                 trips={trips} 
                 onEdit={handleEditClick} 
-                onDelete={handleDelete} 
+                onDelete={deleteTrip} 
             />
 
             <TripModal 

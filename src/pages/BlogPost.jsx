@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import BlogPostHero from '../components/blog/BlogPostHero';
 import BlogPostContent from '../components/blog/BlogPostContent';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 
 const BlogPost = () => {
     const { id } = useParams();

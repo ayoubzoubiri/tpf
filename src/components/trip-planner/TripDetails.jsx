@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
-import Navbar from '../Navbar';
-import Footer from '../Footer';
+import Navbar from '../layout/Navbar';
+import Footer from '../layout/Footer';
 import ItineraryView from '../../pages/ItineraryView';
 
 const TripDetails = () => {

@@ -1,26 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
+import React, { useEffect } from 'react';
+import { useBlog } from '../context/BlogContext';
 import BlogHeader from '../components/blog/BlogHeader';
 import BlogCard from '../components/blog/BlogCard';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 
 const Blog = () => {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { posts, loading, fetchPosts } = useBlog();
 
     useEffect(() => {
-        const fetchPosts = async () => {
-            try {
-                const response = await api.get('/blog');
-                setPosts(response.data);
-            } catch (error) {
-                console.error("Error fetching blog posts", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchPosts();
     }, []);
 

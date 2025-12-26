@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, TripProvider, BlogProvider, AdminProvider } from './context';
 import Home from './pages/Home';
 import TripPlanner from './pages/TripPlanner';
 import Login from './pages/Login';
@@ -20,27 +20,33 @@ import BlogPost from './pages/BlogPost';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/planner" element={<TripPlanner />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/mytrips" element={<MyTrips />} />
-          <Route path="/trips/:id" element={<TripDetails />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogPost />} />
+      <TripProvider>
+        <BlogProvider>
+          <AdminProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/planner" element={<TripPlanner />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/mytrips" element={<MyTrips />} />
+                <Route path="/trips/:id" element={<TripDetails />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:id" element={<BlogPost />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="trips" element={<AdminTrips />} />
-            <Route path="blogs" element={<AdminBlogs />} />
-          </Route>
-        </Routes>
-      </Router>
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="trips" element={<AdminTrips />} />
+                  <Route path="blogs" element={<AdminBlogs />} />
+                </Route>
+              </Routes>
+            </Router>
+          </AdminProvider>
+        </BlogProvider>
+      </TripProvider>
     </AuthProvider>
   );
 }

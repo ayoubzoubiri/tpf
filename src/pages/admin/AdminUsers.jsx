@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../api/axios';
+import { useAdmin } from '../../context/AdminContext';
 import UsersTable from '../../components/admin/users/UsersTable';
 import UserModal from '../../components/admin/users/UserModal';
 
 const AdminUsers = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { users, loading, fetchUsers, deleteUser, createUser, updateUser } = useAdmin();
     const [showModal, setShowModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -14,28 +13,6 @@ const AdminUsers = () => {
     useEffect(() => {
         fetchUsers();
     }, []);
-
-    const fetchUsers = async () => {
-        try {
-            const response = await api.get('/admin/users');
-            setUsers(response.data);
-        } catch (error) {
-            console.error("Error fetching users", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            try {
-                await api.delete(`/admin/users/${id}`);
-                setUsers(users.filter(user => user.id !== id));
-            } catch (error) {
-                console.error("Error deleting user", error);
-            }
-        }
-    };
 
     const handleCreateClick = () => {
         setSelectedUser(null);
@@ -53,18 +30,13 @@ const AdminUsers = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            if (isEditing) {
-                const response = await api.put(`/admin/users/${selectedUser.id}`, formData);
-                setUsers(users.map(u => u.id === selectedUser.id ? response.data : u));
-            } else {
-                const response = await api.post('/admin/users', formData);
-                setUsers([response.data, ...users]);
-            }
+        const success = isEditing 
+            ? await updateUser(selectedUser.id, formData)
+            : await createUser(formData);
+        
+        if (success) {
             setShowModal(false);
             setFormData({ name: '', email: '', password: '', role: 'user' });
-        } catch (error) {
-            console.error("Error saving user", error);
         }
     };
 
@@ -94,7 +66,7 @@ const AdminUsers = () => {
             <UsersTable 
                 users={users} 
                 onEdit={handleEditClick} 
-                onDelete={handleDelete} 
+                onDelete={deleteUser} 
             />
 
             <UserModal 

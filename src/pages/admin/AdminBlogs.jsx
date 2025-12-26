@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../api/axios';
+import { useAdmin } from '../../context/AdminContext';
 import BlogsTable from '../../components/admin/blogs/BlogsTable';
 import BlogModal from '../../components/admin/blogs/BlogModal';
 
 const AdminBlogs = () => {
-    const [blogs, setBlogs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { blogs, loading, fetchBlogs, deleteBlog, createBlog, updateBlog } = useAdmin();
     const [showModal, setShowModal] = useState(false);
     const [selectedBlog, setSelectedBlog] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -21,28 +20,6 @@ const AdminBlogs = () => {
     useEffect(() => {
         fetchBlogs();
     }, []);
-
-    const fetchBlogs = async () => {
-        try {
-            const response = await api.get('/admin/blogs');
-            setBlogs(response.data);
-        } catch (error) {
-            console.error("Error fetching blogs", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm('Delete this blog post?')) {
-            try {
-                await api.delete(`/admin/blogs/${id}`);
-                setBlogs(blogs.filter(blog => blog.id !== id));
-            } catch (error) {
-                console.error("Error deleting blog", error);
-            }
-        }
-    };
 
     const handleCreateClick = () => {
         setSelectedBlog(null);
@@ -71,17 +48,12 @@ const AdminBlogs = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            if (isEditing) {
-                const response = await api.put(`/admin/blogs/${selectedBlog.id}`, formData);
-                setBlogs(blogs.map(b => b.id === selectedBlog.id ? response.data : b));
-            } else {
-                const response = await api.post('/admin/blogs', formData);
-                setBlogs([response.data, ...blogs]);
-            }
+        const success = isEditing 
+            ? await updateBlog(selectedBlog.id, formData)
+            : await createBlog(formData);
+
+        if (success) {
             setShowModal(false);
-        } catch (error) {
-            console.error("Error saving blog", error);
         }
     };
 
@@ -107,7 +79,7 @@ const AdminBlogs = () => {
             <BlogsTable 
                 blogs={blogs} 
                 onEdit={handleEditClick} 
-                onDelete={handleDelete} 
+                onDelete={deleteBlog} 
             />
 
             <BlogModal 

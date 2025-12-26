@@ -1,5 +1,5 @@
 import React from 'react';
-import MapComponent from '../MapComponent';
+import MapComponent from '../layout/MapComponent';
 
 const MapSection = ({ activeDay, activities, destination }) => {
     return (
